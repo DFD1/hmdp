@@ -138,8 +138,14 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         String shopJson = stringRedisTemplate.opsForValue().get(queryKey);
         //判断是否存在
         if(StrUtil.isBlank(shopJson)){
+            Shop shop = getById(id);
+            try {
+                this.saveShop2Redis(id,20L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             //不存在直接返回null
-            return null;
+            return shop;
         }
         //命中，将json字符串反序列化成RedisData对象
         RedisData redisData = JSONUtil.toBean(shopJson, RedisData.class);
