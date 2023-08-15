@@ -77,6 +77,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //Object cachecode = session.getAttribute("code"); 存在session里的code
         //获取存在redis里面的验证码code
         String redis_code = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
+        //与前端传入的验证码做比较，如果不一致则报错  验证码不正确
         if(redis_code == null || !redis_code.equals(login_code)){
             return Result.fail("验证码不正确");
         }
@@ -90,7 +91,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String token = UUID.randomUUID().toString(true);
         //拼接token_key
         String token_key = LOGIN_USER_KEY + token;
-        //将user对象转换为UserDTO对象
+        //将user对象转换为UserDTO对象，为了防止返回的user属性过多，防止用户信息泄露
         UserDTO userDTO = BeanUtil.copyProperties(user,UserDTO.class);
         //将userDto转换为Map，存入redis,因为userMap中的id为long类型，所以要使用setFieldValueEditor 将id字段转换为string
         Map<String, Object> userMap = BeanUtil.beanToMap(userDTO,new HashMap<>(), CopyOptions.create().setIgnoreNullValue(true)
@@ -103,6 +104,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return Result.ok(token);
     }
 
+    //根据手机号创建一个新的用户
     private User createUser(String phone){
         User user = new User();
         user.setPhone(phone);
